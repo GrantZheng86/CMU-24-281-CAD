@@ -1,0 +1,26 @@
+twoDarray = read("file name");
+// Choose the origion as the base point to calculate vectors
+baseVertix = [0 0];
+totalArea = 0;
+for (i = 0; i < twoDarray.length(); i ++){
+	vectorOne = twoDarray[i] - baseVertix;
+	
+	// This code will form a loop, the last one in the loop 
+	// is the beginning one, with index of 0, this if loop
+	// will desl with this problem
+	if (i + 1 == twoDarray.length()){
+	nextVertix = twoDarray[0];
+	} else {
+	nextVertix = twoDarray[i + 1];
+	}
+	vectorTwo = nextVertix - baseVertix;
+
+	// Area is the cross product of vectorOne and vectorTwo
+	areaForCurrentTriangle = crossProduct(vectorOne, vectorTwo)/2;
+
+	// Here the total area is in vector from if the matrix is 3x3
+	// since this problem uses 2D system, there is no need to take
+	// norm of the final answer
+	totalArea += areaForCurrentTriangle;
+}
+

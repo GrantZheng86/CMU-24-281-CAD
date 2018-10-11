@@ -1,0 +1,16 @@
+This code is developed under Ubuntu 18.04, using Python3 with Eclipse.
+
+To run this code, make sure that the txt files are in a directory above where the Main.py is.
+
+This code also requires the following Python3 packages:
+	numpy ,tkinter, cv
+
+This code has been only tested under ubuntu18.04 in terminal. To run this code, type "Python3 Main.py", GUI interface will take user input. 
+
+Type the file name including .txt
+
+Type the coordinate of the view point, separate with comma. For example 20,20,20
+
+Type the pattern board information, the first 3 will be the point on plane, the following 6 are the two directions. For example 0,0,0,0,0,1,1,1,0 means [0,0,0] is on the plane, [0,0,1] is one of the direction, [1,1,0] is the other direction
+
+Type pattern width and spacing, separate with comma. for example 15, 12 means 15 for width, 12 for spacing

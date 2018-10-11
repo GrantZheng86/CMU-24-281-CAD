@@ -1,0 +1,38 @@
+// Build a surface Array containing vertix indices 
+surfaceArray = filter(read("fileName.dat"), firstLetter = "f");
+
+// Build a vertix Array containing all vertices 
+vertixArray = filter(read("fileName.dat"), diratLetter = "v);
+
+// Calculate surface Area
+totalArea = 0;
+for (int i = 0; i < surfaceArray.length(); i ++){
+	// Set the first vertix of any surface to be the 
+	// base point to calculate area
+	baseVertix = surfaceArray.get(i)[0];
+	
+	for (int j = 0; j < surfaceArray.get(i); j ++{
+	// Perform the same functionality here as demostrated in problem 1
+	// Detailed pseudocode please see Problem1Pseudocode.txt
+	}
+	
+	totalArea += currentArea;
+
+}
+
+// calculate column
+totalVolumn = 0;
+for (int i = 0; i < surfaceArray.length(); i ++){
+	// This for loop calculates column for each cone consists from 
+	// a surface given the the file and the origin
+	currentConeVolumn = 0
+	for (int j = 0; j < aurfaceArray.get(i); j ++){
+	// Calculate triangle area from cross product as in
+	// problem 1.
+	vectorThree = point in current triangle - origin
+	currentConeVolume  += dotProduct(vectorThree, triangleArea) / 6
+	
+	}
+
+	totalVolumn += norm(currentVolumn)
+}

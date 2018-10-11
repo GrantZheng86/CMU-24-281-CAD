@@ -1,0 +1,133 @@
+ l = len(vertices)
+    width = int(dim)
+    toReturn = []
+    for i in range(l):
+        # Lower boarder Situation
+        if (i < width):
+            # 0 Corner situation
+            if (i == 0):
+                c0 = vertices[0]
+                cw  = vertices[width]
+                cd  = vertices[1]
+                vw = np.subtract(cw, c0)
+                vd = np.subtract(cd, c0)
+                norm = np.cross(vd, vw)
+                norm = averageVectors([norm])
+                toReturn.append(norm)
+            # At the other corner
+            elif (i == width - 1):
+                c0 = vertices[i]
+                ca  = vertices[i - 1]
+                cw  = vertices[i + width]
+                vw = np.subtract(cw, c0)
+                va = np.subtract(ca, c0)
+                norm = np.cross(vw, va)
+                norm = averageVectors([norm])
+                toReturn.append(norm)
+            # other cases at the edge
+            else:
+                c0 = vertices[i]
+                ca  = vertices[i - 1]
+                cd  = vertices[i + 1]
+                cw = vertices[i + width]
+                
+                vw = np.subtract(cw, c0)
+                va = np.subtract(ca, c0)
+                n1 = np.cross(vw, va)
+                
+                vd = np.subtract(cd, c0)
+                n2 = np.cross(vd, vw)
+                norm = averageVectors([n1, n2])
+                toReturn.append(norm)
+        
+        # Upper boarder cases
+        elif (i >= l - width):
+            #    corner one case
+            if (i == l - width):
+                c0 = vertices[i]
+                cs  = vertices[i - width]
+                cd  = vertices[i + 1]
+                
+                vd = np.subtract(cd, c0)
+                vs = np.subtract(cs, c0)
+                norm = np.cross(vs, vd)
+                norm = averageVectors([norm])
+                toReturn.append(norm)
+            #    corner two case
+            elif(i == l - 1): 
+                c0 = vertices[i]
+                cs = vertices[i - width]
+                ca = vertices[i - 1] 
+                
+                vs = np.subtract(cs, c0)
+                va = np.subtract(ca, c0)
+                norm = np.cross(va, vs)
+                norm = averageVectors([norm])
+                toReturn.append(norm)
+            #    The rest of the edge
+            else:
+                c0 = vertices[i]
+                ca = vertices[i - 1]
+                cd = vertices[i + 1]
+                cs = vertices[i - width]
+                
+                va = np.subtract(ca, c0)
+                vs = np.subtract(cs, c0)
+                n1 = np.cross(va, vs)
+                
+                vd = np.subtract(cd, c0)
+                n2 = np.cross(vs, vd)
+                norm = averageVectors([n1, n2])
+                toReturn.append(norm)
+        # left edge cases
+        elif( i % width == 0):
+            c0 = vertices[i]
+            cs = vertices[i - width]
+            cw = vertices[i + width]
+            cd = vertices[i + 1]
+            
+            vs = np.subtract(cs, c0)
+            vd = np.subtract(cd, c0)
+            vw = np.subtract(cw, c0)
+            
+            n1 = np.cross(vs, vd)
+            n2 = np.cross(vd, vw)
+            
+            norm = averageVectors([n1, n2])
+            toReturn.append(norm)
+        
+        # right edge case
+        elif((i + 1) % width == 0):
+            c0 = vertices[i]
+            cw = vertices[i + width]
+            cs = vertices[i - width]
+            ca = vertices[i - 1]
+            
+            vs = np.subtract(cs, c0)
+            va = np.subtract(ca, c0)
+            vw = np.subtract(cw, c0)
+            
+            n1 = np.cross(va,vs)
+            n2 = np.cross(vw,va)
+            norm = averageVectors([n1, n2])
+            toReturn.append(norm)
+        
+        # Center case
+        else: 
+            c0 = vertices[i]
+            cw = vertices[i + width]
+            ca = vertices[i - 1]
+            cs = vertices[i - width]
+            cd = vertices[i + 1]
+            
+            vw = np.subtract(cw, c0)
+            va = np.subtract(ca, c0)
+            vs = np.subtract(cs, c0)
+            vd = np.subtract(cd, c0)
+            
+            n1 = np.cross(vw,va)
+            n2 = np.cross(va,vs)
+            n3 = np.cross(vs,vd)
+            n4 = np.cross(vd,vw)
+            norm = averageVectors([n1,n2,n3,n4])
+            toReturn.append(norm) 

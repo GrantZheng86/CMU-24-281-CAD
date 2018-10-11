@@ -1,0 +1,37 @@
+'''
+Created on Sep 26, 2018
+
+@author: grant
+'''
+import numpy as np
+
+class Vertex(object):
+    '''
+    classdocs
+    '''
+
+
+    def __init__(self, x, y, z):
+        '''
+        Constructor
+        '''
+        self.x = x;
+        self.y = y;
+        self.z = z;
+        
+        
+    def printCoordinate(self):
+        toPrint = "[" + str(self.x) + "," + str(self.y) + "," +  str(self.z) + "] \n"
+        print(toPrint)
+        
+    def coordinateForVRML(self):
+        toReturn = str(self.x) + " " + str(self.y) + " " + str(self.z)
+        return toReturn
+    
+
+        
+    def returnValue(self):
+        return np.array([self.x, self.y, self.z])
+    
+    def returnMatrixValue(self):
+        return np.array([self.x, self.y, self.z,1])
