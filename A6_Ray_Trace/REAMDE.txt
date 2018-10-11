@@ -1,4 +1,4 @@
-This code is developed under Ubuntu 18.04, using Python3 with Eclipse.
+ This code is developed under Ubuntu 18.04, using Python3 with Eclipse.
 
 To run this code, make sure that the txt files are in a directory above where the Main.py is.
 
