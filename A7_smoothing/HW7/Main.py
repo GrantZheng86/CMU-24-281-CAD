@@ -9,11 +9,74 @@ Created on Oct 12, 2018
 from tkinter import *
 import tkinter.simpledialog as db
 import tkinter.messagebox as mb
-
+import threading 
+import os
 import numpy as np
-from HW7.HelperMethods import HelperMethods
+from HelperMethods import *
+from Vertex import *
+from sympy.printing.theanocode import dim_handling
 
-
+def calculatedirection(vertexArray,dim):
+    p0 = vertexArray[0]
+    p1 = vertexArray[1]
+    diff = np.subtract(p0, p1)
+    
+    if ( diff[0] <= 0.0001 ):
+        return 1
+    else:
+        return 0
+    
+def handleConvertingVertex(startNum, endNum, storage, vertexArray):
+    l = endNum - startNum
+    
+    for i in range(l):
+        storage[i + startNum] = Vertex(vertexArray[i + startNum])
+        
+def handleConnectingVertex(newVertexArray, dim, dir):
+    l = len(newVertexArray)
+    
+    for i in range(l):
+        a = i - 1
+        d = i + 1
+        w = i + dim
+        s = i - dim
+        
+        if (dir == 0):
+            
+    
+    if (dir == 0):
+        for i in range(l):
+            if (i < dim):
+                if (i == 0):
+                    newVertexArray[i].right = newVertexArray[i + 1]
+                elif(i == dim - 1):
+                    newVertexArray[i].left = newVertexArray[i - 1]
+                else:
+                    newVertexArray[i].left = newVertexArray[i - 1]
+                    newVertexArray[i].right = newVertexArray[i + 1]
+                newVertexArray[i].up = newVertexArray[i + dim]
+                
+            elif(l - dim <= i):
+                if (i == l - dim):
+                    newVertexArray[i].right = newVertexArray[i + 1]
+                elif(i == l - 1):
+                    newVertexArray[i].left = newVertexArray[i - 1]
+                else:
+                    newVertexArray[i].left = newVertexArray[i - 1]
+                    newVertexArray[i].right = newVertexArray[i + 1]
+                newVertexArray[i].down = newVertexArray[i - dim]
+                
+            elif(i % dim == 0 or (i + 1) % dim == 0):
+                if (i % dim == 0):
+                    newVertexArray[i].right = newVertexArray[i + 1]
+                else:
+                    newVertexArray[i].left = newVertexArray[i - 1]
+                newVertexArray[i].up = newVertexArray[i + dim]
+                newVertexArray[i].down = newVertexArray[i - dim]
+                
+                
+                
+          
 if __name__ == '__main__':
     pass
 
@@ -29,16 +92,34 @@ widthAndSpacing = db.askstring("Zebra Pattern Plane", "Thickness and Spacing for
 
 fileData = open("../files/" + fileName).read().split("\n")
 vertexArray = []
-for i in range(len(fileData)):
-    vertexArray.append(HelperMethods.readDataString(fileData[i]))
+l = len(fileData)
 
-viewPoint = np.array(HelperMethods.readDataString(viewPoint))
-patternPlane = HelperMethods.readDataString(patternPlane)
-p0 = np.array(patternPlane[:3])
-a  = np.array(patternPlane[3:6])
-b  = np.array(patternPlane[6:9])
-widthAndSpacing = HelperMethods.readDataString(widthAndSpacing)
-width = widthAndSpacing[0]
-spacing = widthAndSpacing[1]
+for i in range(l):
+    curr = HelperMethods.readDataString(fileData[i])
+    vertexArray.append(curr)
 
-print(b)
+viewPoint = HelperMethods.readDataString(viewPoint)
+patternPlane = HelperMethods.readDataString2(patternPlane)
+dim = vertexArray[0][0]
+del vertexArray[0]
+vertexArrayLength = len(vertexArray)
+
+threadNum = 8
+workLoad = int(vertexArrayLength / threadNum)
+taskList = [None] * threadNum
+newVertexArray = [None] * vertexArrayLength
+
+for i in range(threadNum):
+    startNum = i * workLoad
+    if (i == threadNum - 1):
+        endNum = vertexArrayLength
+    else:
+        endNum = (i + 1) * workLoad
+        
+    taskList[i] = threading.Thread(target = handleConvertingVertex, 
+                                   args = (startNum, endNum, newVertexArray, vertexArray,))
+    taskList[i].start()
+    
+for i in range(threadNum):
+    taskList[i].join()
+print("print")

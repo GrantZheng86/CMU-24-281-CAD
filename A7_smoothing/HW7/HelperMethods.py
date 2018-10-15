@@ -25,7 +25,8 @@ class HelperMethods(object):
         either commas or spaces, returns a numpy array
         '''   
         if "," not in dataString:
-            toReturn = np.array(list(map(float, dataString.split(" "))))
+            toConvert = list(map(float, dataString.split()))
+            toReturn = np.array(toConvert)
         else:
             toReturn = np.array(list(map(float, dataString.split(","))))
         
@@ -37,7 +38,7 @@ class HelperMethods(object):
         This class handles spreading numbers when ";" is presenting in the 
         string spread in the string
         '''
-        xyzTogether = list(map(float, dataString.split(";")))
+        xyzTogether = dataString.split(";")
         toReturn = []
         for i in range(len(xyzTogether)):
             temp = HelperMethods.readDataString(xyzTogether[i])

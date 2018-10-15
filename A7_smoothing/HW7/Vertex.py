@@ -4,7 +4,7 @@ Created on Oct 12, 2018
 @author: grant
 '''
 
-class Vertexs(object):
+class Vertex(object):
     '''
     classdocs
     '''
