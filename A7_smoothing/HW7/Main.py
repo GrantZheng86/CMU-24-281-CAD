@@ -35,44 +35,42 @@ def handleConvertingVertex(startNum, endNum, storage, vertexArray):
 def handleConnectingVertex(newVertexArray, dim, dir):
     l = len(newVertexArray)
     
-    for i in range(l):
-        a = i - 1
-        d = i + 1
-        w = i + dim
-        s = i - dim
-        
+    for i in range(l):  
         if (dir == 0):
-            
-    
-    if (dir == 0):
-        for i in range(l):
-            if (i < dim):
-                if (i == 0):
-                    newVertexArray[i].right = newVertexArray[i + 1]
-                elif(i == dim - 1):
-                    newVertexArray[i].left = newVertexArray[i - 1]
-                else:
-                    newVertexArray[i].left = newVertexArray[i - 1]
-                    newVertexArray[i].right = newVertexArray[i + 1]
-                newVertexArray[i].up = newVertexArray[i + dim]
+            for i in range(l):
+                # If located on the lower boundary
+                if (i < dim):
+                    if (i == 0):
+                        newVertexArray[i].right = newVertexArray[i + 1]
+                    elif(i == dim - 1):
+                        newVertexArray[i].left = newVertexArray[i - 1]
+                    else:
+                        newVertexArray[i].left = newVertexArray[i - 1]
+                        newVertexArray[i].right = newVertexArray[i + 1]
+                        
+                    newVertexArray[i].up = newVertexArray[i + dim]
                 
-            elif(l - dim <= i):
-                if (i == l - dim):
-                    newVertexArray[i].right = newVertexArray[i + 1]
-                elif(i == l - 1):
-                    newVertexArray[i].left = newVertexArray[i - 1]
-                else:
-                    newVertexArray[i].left = newVertexArray[i - 1]
-                    newVertexArray[i].right = newVertexArray[i + 1]
-                newVertexArray[i].down = newVertexArray[i - dim]
+                # If located on the upper boundary
+                elif(l - dim <= i):
+                    if (i == l - dim):
+                        newVertexArray[i].right = newVertexArray[i + 1]
+                    elif(i == l - 1):
+                        newVertexArray[i].left = newVertexArray[i - 1]
+                    else:
+                        newVertexArray[i].left = newVertexArray[i - 1]
+                        newVertexArray[i].right = newVertexArray[i + 1]
+                    
+                    newVertexArray[i].down = newVertexArray[i - dim]
                 
-            elif(i % dim == 0 or (i + 1) % dim == 0):
-                if (i % dim == 0):
-                    newVertexArray[i].right = newVertexArray[i + 1]
-                else:
-                    newVertexArray[i].left = newVertexArray[i - 1]
-                newVertexArray[i].up = newVertexArray[i + dim]
-                newVertexArray[i].down = newVertexArray[i - dim]
+                # If located at the boundaries
+                elif(i % dim == 0 or (i + 1) % dim == 0):
+                    if (i % dim == 0):
+                        newVertexArray[i].right = newVertexArray[i + 1]
+                    else:
+                        newVertexArray[i].left = newVertexArray[i - 1]
+                    
+                    newVertexArray[i].up = newVertexArray[i + dim]
+                    newVertexArray[i].down = newVertexArray[i - dim]
                 
                 
                 
@@ -100,7 +98,7 @@ for i in range(l):
 
 viewPoint = HelperMethods.readDataString(viewPoint)
 patternPlane = HelperMethods.readDataString2(patternPlane)
-dim = vertexArray[0][0]
+dim = int(vertexArray[0][0])
 del vertexArray[0]
 vertexArrayLength = len(vertexArray)
 
@@ -122,4 +120,6 @@ for i in range(threadNum):
     
 for i in range(threadNum):
     taskList[i].join()
+    
+connectedVErtex = handleConnectingVertex(newVertexArray, dim, 0)
 print("print")
