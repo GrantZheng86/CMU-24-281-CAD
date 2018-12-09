@@ -131,9 +131,7 @@ public class voxel {
 	  else return 0;
 	}
 	
-	public static ArrayList<double[]> traverseTree(Sphere sphere, Cube cube, int level, ArrayList<double[]> cubes){
-		if (level >= 5) return cubes;
-	}
+	
 	
 	class Cube{
 		double x, y, z;

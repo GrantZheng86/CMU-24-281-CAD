@@ -10,6 +10,10 @@ public class Octree {
 	
 	public static ArrayList<double[]> traverseTree(Sphere sphere, Cube cube, int level, ArrayList<double[]> cubes){
 		if (level >= 5) return cubes;
+		if (allIn(cube, sphere)) return cubes;
+		
+		// Divide the cube into 8 smaller cubes
+		return null;
 	}
 	
 	/**
@@ -113,6 +117,43 @@ public class Octree {
 			toReturn.add(c5);
 			toReturn.add(c6);
 			toReturn.add(c7);
+			
+			return toReturn;
+		}
+		
+		public ArrayList<Cube> divideTo8(){
+			ArrayList<Cube> toReturn = new ArrayList<>();
+			double subWidth = this.width / 4;
+			double subHeight = this.height / 4;
+			double subDepth = this.depth / 4;
+			for (int i = 0; i < 8; i ++) {
+				double newX;
+				double newY;
+				double newZ;
+				
+				if (i % 4 == 1 || i % 4 == 0) {
+					newX = this.x - subWidth;
+				} else {
+					newX = this.x + subWidth;
+				}
+				
+				if (i % 4 == 0 || i % 4 == 3) {
+					newY = this.y - subHeight;
+				} else {
+					newY = this.y + subHeight;
+				}
+				
+				if (i >= 4) {
+					newZ = this.z - subDepth;
+				} else {
+					newZ = this.z + subDepth;
+				}
+				double[] newCenter = {newX, newY, newZ};
+				double[] xyz = {subWidth, subHeight, subDepth};
+				toReturn.add(new Cube(newCenter, xyz));
+			}
+			
+			
 			
 			return toReturn;
 		}
