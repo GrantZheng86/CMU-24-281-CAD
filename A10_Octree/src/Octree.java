@@ -13,14 +13,12 @@ public class Octree {
 	static final double WIDTH = 18;
 	static final double HEIGHT = 10;
 	static final double DEPTH = 12;
-	static final double[] boxCenter = {0, 0, 0};
-	static final double[] boxDimension = {WIDTH, HEIGHT, DEPTH};
-	
-	
+	static final double[] boxCenter = { 0, 0, 0 };
+	static final double[] boxDimension = { WIDTH, HEIGHT, DEPTH };
+
 	// Some properties of the sphere
 	static final double RADIUS = 8;
-	
-	
+
 	public static void main(String[] args) throws IOException {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 		System.out.println("Input coordinates");
@@ -30,15 +28,16 @@ public class Octree {
 		x0 = Double.parseDouble(st.nextToken());
 		y0 = Double.parseDouble(st.nextToken());
 		z0 = Double.parseDouble(st.nextToken());
-		double[] sphereCenter = {x0, y0, z0};
-		Cube mainCube = new Octree.Cube(boxCenter, boxDimension); 
+		double[] sphereCenter = { x0, y0, z0 };
+		Cube mainCube = new Octree.Cube(boxCenter, boxDimension);
 		Sphere mainSphere = new Sphere(sphereCenter, RADIUS);
-		AllPartialInCubesWrapper leftCubes = traverseTree(mainSphere, mainCube, 0);
-		
+		ArrayList<ColoredCube> leftCubes = traverseTree(mainSphere, mainCube, 0);
+
 		PrintStream output = new PrintStream(new FileOutputStream(new File("Octree.wrl")));
 		output.print(generateVRML(leftCubes, mainSphere));
 		output.close();
-	
+		System.out.println(leftCubes.size());
+
 	}
 
 	/**
@@ -48,111 +47,125 @@ public class Octree {
 	 * @param level
 	 * @return
 	 */
-	public static AllPartialInCubesWrapper traverseTree(Sphere sphere, Cube cube, int level) {
-		ArrayList<Cube> allOut = new ArrayList<>();
-		ArrayList<Cube> partialIn = new ArrayList<>();
-		AllPartialInCubesWrapper toReturn = new AllPartialInCubesWrapper(allOut, partialIn, level);
-		AllPartialInWrapper inStatus = allIn(cube, sphere);
-		if (level >= 5) {
-			
-			if (inStatus.allIn) return toReturn;
-			if (inStatus.partialIn) {
-				toReturn.partialIn.add(cube);
+	public static ArrayList<ColoredCube> traverseTree(Sphere sphere, Cube cube, int level) {
+		ArrayList<ColoredCube> cCubes = new ArrayList<>();
+		int cubeSphere = locationStatus(cube, sphere);
+		if (level == 5) {
+			if (cubeSphere == 1) {
+				cCubes.add(new ColoredCube(-1, cube)); // -1 indicates that it is the last level half intersection cube
+			} else if (cubeSphere == 2) {
+				cCubes.add(new ColoredCube(level, cube));
 			}
-			if (!inStatus.partialIn) {
-				toReturn.allOut.add(cube);
-			}
-			return toReturn;
-		}
 
-		if (inStatus.allIn)
-			return toReturn;
+			return cCubes;
+		} else if (cubeSphere == 2) {
+			cCubes.add(new ColoredCube(level, cube));
+			return cCubes;
+		}
 
 		// Divide the cube into 8 smaller cubes
 		ArrayList<Cube> subCubes = cube.divideTo8();
 		for (int i = 0; i < 8; i++) {
-			AllPartialInCubesWrapper curr = traverseTree(sphere, subCubes.get(i), level + 1);
-			toReturn.allOut.addAll(curr.allOut);
-			toReturn.partialIn.addAll(curr.partialIn);
+			ArrayList<ColoredCube> curr = traverseTree(sphere, subCubes.get(i), level + 1);
+			cCubes.addAll(curr);
 		}
 
-		return toReturn;
+		return cCubes;
 	}
 
-	/**
-	 * This method calculates whether a cube is totally in a sphere If the corner of
-	 * the cube overlap with the sphere surface, it is still considered as all in.
-	 * 
-	 * @param cube   a Cube object
-	 * @param sphere a Sphere object
-	 * @return a boolean, true if the cube is all in, false otherwise
-	 */
-	public static AllPartialInWrapper allIn(Cube cube, Sphere sphere) {
-		ArrayList<double[]> cubeCorners = cube.calculateCorners();
-		int cornersIn = 0;
+	static class ColoredCube {
+		int color;
+		Cube cube;
+
+		public ColoredCube(int color, Cube cube) {
+			this.color = color;
+			this.cube = cube;
+		}
+	}
+
+	public static int locationStatus(Cube cube, Sphere sphere) {
+		ArrayList<double[]> cornerList = cube.calculateCorners();
+		double[] cubeCenter = { cube.x, cube.y, cube.z };
+		double[] sphereCenter = sphere.center;
+		double widthL = cubeCenter[0] - cube.width / 2;
+		double widthU = cubeCenter[0] + cube.width / 2;
+		double heightL = cubeCenter[1] - cube.height / 2;
+		double heightU = cubeCenter[1] + cube.height / 2;
+		double depthL = cubeCenter[2] - cube.depth / 2;
+		double depthU = cubeCenter[2] + cube.depth / 2;
 		
-		for (int i = 0; i < cubeCorners.size(); i++) {
-			double currDist = calculateDist(cubeCorners.get(i), sphere.center);
-			if (currDist <= sphere.radius)
+		boolean sphereInBox = false;
+		if (sphereCenter[0] > widthL && sphereCenter[0] < widthU && sphereCenter[1] > heightL && sphereCenter[1] < heightU
+				&& sphereCenter[2] > depthL && sphereCenter[2] < depthU) {
+			sphereInBox = true;
+		}
+
+		int cornersIn = 0;
+		for (int i = 0; i < 8; i++) {
+			double[] currCorner = cornerList.get(i);
+			if (calculateDist(currCorner, sphere.center) <= sphere.radius)
 				cornersIn += 1;
 		}
-		
-		if (cornersIn == 8) return new AllPartialInWrapper(true, true);
-		if (cornersIn == 0) return new AllPartialInWrapper(false, false);
-		return new AllPartialInWrapper(false, true);
+
+		if (sphereInBox) {
+			if (cornersIn == 8)
+				return 0;			// Fully in
+			return 1;				// Partially In
+			
+		} else {
+			if (cornersIn == 8)
+				return 0;			// Fully in
+			else if (cornersIn == 0)
+				return 2;			// Fully out
+			return 1;				// Partially In
+		}
 	}
-	
-	public static String generateVRML(AllPartialInCubesWrapper cubes, Sphere sphere) {
+
+	public static String generateVRML(ArrayList<ColoredCube> cubes, Sphere sphere) {
 		double x0 = sphere.center[0];
 		double y0 = sphere.center[1];
 		double z0 = sphere.center[2];
 		String toReturn = "#VRML V2.0 utf8 \n";
-		toReturn += "Background { skyColor 1 1 1 }\n";
-		toReturn += "NavigationInfo { type \"EXAMINE\"}\n";
-		
-		// Shape for the original box
-		toReturn += "Shape{\n";
-		toReturn += "\tappearance Appearance { material Material { diffuseColor 0 0 1 }}\n";
-		toReturn += "\tgeometry Box { size " + WIDTH + " " + HEIGHT + " " + DEPTH + "}\n";
-		toReturn += "}\n";
-		
-		//Shape for the original sphere
-		toReturn += "Transform {\n";
-		toReturn += "\ttranslation " + x0 + " " + y0 + " " + z0 + "\n";
-		toReturn += "\tchildren Shape {\n";
-		toReturn += "\t\tgeometry Sphere { radius " + RADIUS + "}\n";
-		toReturn += "\t\tappearance Appearance { material Material { diffuseColor 1 0 0 }}\n";
-		toReturn += "\t}\n";
-		toReturn += "}\n";
-		
-		// Subboxes
-		toReturn += "Transform {\n";
-		toReturn += "\ttranslation 0.0 " + "30" + "0.0\n";
-		
+		// toReturn += "Background { skyColor 1 1 1 }\n";
+		// toReturn += "NavigationInfo { type \"EXAMINE\"}\n";
+
 		/*
+		 * // Shape for the original box toReturn += "Shape{\n"; toReturn +=
+		 * "\tappearance Appearance { material Material { diffuseColor 0 0 1 }}\n";
+		 * toReturn += "\tgeometry Box { size " + WIDTH + " " + HEIGHT + " " + DEPTH +
+		 * "}\n"; toReturn += "}\n";
+		 * 
+		 * //Shape for the original sphere toReturn += "Transform {\n"; toReturn +=
+		 * "\ttranslation " + x0 + " " + y0 + " " + z0 + "\n"; toReturn +=
+		 * "\tchildren Shape {\n"; toReturn += "\t\tgeometry Sphere { radius " + RADIUS
+		 * + "}\n"; toReturn +=
+		 * "\t\tappearance Appearance { material Material { diffuseColor 1 0 0 }}\n";
+		 * toReturn += "\t}\n"; toReturn += "}\n";
+		 * 
+		 * // Subboxes toReturn += "Transform {\n"; toReturn += "\ttranslation 0.0 " +
+		 * "30" + "0.0\n";
+		 */
+
+		toReturn += "Shape {\n";
 		toReturn += "	geometry PointSet {\n";
 		toReturn += "		coord Coordinate {\n";
-		toReturn += " 			point [\n";	
-		
-		
-		for (int i = 0; i < cubes.size(); i ++) {
-			Cube currCube = cubes.get(i);
-			toReturn += "  			" + String.valueOf(currCube.x) + " " + 
-						String.valueOf(currCube.y) + " " + String.valueOf(currCube.z) 
-						+ ",\n";
+		toReturn += " 			point [\n";
+
+		for (int i = 0; i < cubes.size(); i++) {
+			ColoredCube currCube = cubes.get(i);
+			toReturn += "  			" + String.valueOf(currCube.cube.x) + " " + String.valueOf(currCube.cube.y) + " "
+					+ String.valueOf(currCube.cube.z) + ",\n";
 		}
-		
+
 		toReturn += " 			]\n";
 		toReturn += "  		}\n";
 		toReturn += "  		color Color {\n";
 		toReturn += "  		color [\n";
-		for (int i = 0; i < cubes.size(); i ++) {
+		for (int i = 0; i < cubes.size(); i++) {
 			toReturn += "			1.0 1.0 1.0,\n";
 		}
 		toReturn += "] \n } \n} \n}";
-		*/
-		
-		
+
 		return toReturn;
 	}
 
@@ -202,6 +215,7 @@ public class Octree {
 			this.width = xyzLimits[0];
 			this.height = xyzLimits[1];
 			this.depth = xyzLimits[2];
+
 		}
 
 		/**
@@ -295,26 +309,5 @@ public class Octree {
 			this.radius = radius;
 		}
 	}
-	
-	static class AllPartialInWrapper {
-		boolean allIn;
-		boolean partialIn;
-		
-		public AllPartialInWrapper(boolean allIn, boolean partialIn) {
-			this.allIn = allIn;
-			this.partialIn = partialIn;
-		}
-	}
-	
-	static class AllPartialInCubesWrapper {
-		ArrayList<Cube> allOut = new ArrayList<>();
-		ArrayList<Cube> partialIn = new ArrayList<>();
-		int level;
-		
-		public AllPartialInCubesWrapper(ArrayList<Cube> allOut, ArrayList<Cube> partialIn, int level) {
-			this.allOut = allOut;
-			this.partialIn = partialIn;
-			this.level = level;
-		}
-	}
+
 }
