@@ -15,6 +15,8 @@ public class Octree {
 	static final double DEPTH = 12;
 	static final double[] boxCenter = {0, 0, 0};
 	static final double[] boxDimension = {WIDTH, HEIGHT, DEPTH};
+	
+	
 	// Some properties of the sphere
 	static final double RADIUS = 8;
 	
@@ -31,12 +33,12 @@ public class Octree {
 		double[] sphereCenter = {x0, y0, z0};
 		Cube mainCube = new Octree.Cube(boxCenter, boxDimension); 
 		Sphere mainSphere = new Sphere(sphereCenter, RADIUS);
-		ArrayList<Cube> leftCubes = traverseTree(mainSphere, mainCube, 0);
+		AllPartialInCubesWrapper leftCubes = traverseTree(mainSphere, mainCube, 0);
 		
 		PrintStream output = new PrintStream(new FileOutputStream(new File("Octree.wrl")));
-		output.print(generateVRML(leftCubes));
+		output.print(generateVRML(leftCubes, mainSphere));
 		output.close();
-		System.out.println(leftCubes.size());
+	
 	}
 
 	/**
@@ -46,21 +48,32 @@ public class Octree {
 	 * @param level
 	 * @return
 	 */
-	public static ArrayList<Cube> traverseTree(Sphere sphere, Cube cube, int level) {
-		ArrayList<Cube> toReturn = new ArrayList<>();
-		if (level >= 6) {
-			if (!allIn(cube, sphere))
-				toReturn.add(cube);
+	public static AllPartialInCubesWrapper traverseTree(Sphere sphere, Cube cube, int level) {
+		ArrayList<Cube> allOut = new ArrayList<>();
+		ArrayList<Cube> partialIn = new ArrayList<>();
+		AllPartialInCubesWrapper toReturn = new AllPartialInCubesWrapper(allOut, partialIn, level);
+		AllPartialInWrapper inStatus = allIn(cube, sphere);
+		if (level >= 5) {
+			
+			if (inStatus.allIn) return toReturn;
+			if (inStatus.partialIn) {
+				toReturn.partialIn.add(cube);
+			}
+			if (!inStatus.partialIn) {
+				toReturn.allOut.add(cube);
+			}
 			return toReturn;
 		}
 
-		if (allIn(cube, sphere))
+		if (inStatus.allIn)
 			return toReturn;
 
 		// Divide the cube into 8 smaller cubes
 		ArrayList<Cube> subCubes = cube.divideTo8();
 		for (int i = 0; i < 8; i++) {
-			toReturn.addAll(traverseTree(sphere, subCubes.get(i), level + 1));
+			AllPartialInCubesWrapper curr = traverseTree(sphere, subCubes.get(i), level + 1);
+			toReturn.allOut.addAll(curr.allOut);
+			toReturn.partialIn.addAll(curr.partialIn);
 		}
 
 		return toReturn;
@@ -74,25 +87,54 @@ public class Octree {
 	 * @param sphere a Sphere object
 	 * @return a boolean, true if the cube is all in, false otherwise
 	 */
-	public static boolean allIn(Cube cube, Sphere sphere) {
+	public static AllPartialInWrapper allIn(Cube cube, Sphere sphere) {
 		ArrayList<double[]> cubeCorners = cube.calculateCorners();
-
+		int cornersIn = 0;
+		
 		for (int i = 0; i < cubeCorners.size(); i++) {
 			double currDist = calculateDist(cubeCorners.get(i), sphere.center);
-			if (currDist > sphere.radius)
-				return false;
+			if (currDist <= sphere.radius)
+				cornersIn += 1;
 		}
-		return true;
+		
+		if (cornersIn == 8) return new AllPartialInWrapper(true, true);
+		if (cornersIn == 0) return new AllPartialInWrapper(false, false);
+		return new AllPartialInWrapper(false, true);
 	}
 	
-	public static String generateVRML(ArrayList<Cube> cubes) {
+	public static String generateVRML(AllPartialInCubesWrapper cubes, Sphere sphere) {
+		double x0 = sphere.center[0];
+		double y0 = sphere.center[1];
+		double z0 = sphere.center[2];
 		String toReturn = "#VRML V2.0 utf8 \n";
 		toReturn += "Background { skyColor 1 1 1 }\n";
 		toReturn += "NavigationInfo { type \"EXAMINE\"}\n";
+		
+		// Shape for the original box
 		toReturn += "Shape{\n";
+		toReturn += "\tappearance Appearance { material Material { diffuseColor 0 0 1 }}\n";
+		toReturn += "\tgeometry Box { size " + WIDTH + " " + HEIGHT + " " + DEPTH + "}\n";
+		toReturn += "}\n";
+		
+		//Shape for the original sphere
+		toReturn += "Transform {\n";
+		toReturn += "\ttranslation " + x0 + " " + y0 + " " + z0 + "\n";
+		toReturn += "\tchildren Shape {\n";
+		toReturn += "\t\tgeometry Sphere { radius " + RADIUS + "}\n";
+		toReturn += "\t\tappearance Appearance { material Material { diffuseColor 1 0 0 }}\n";
+		toReturn += "\t}\n";
+		toReturn += "}\n";
+		
+		// Subboxes
+		toReturn += "Transform {\n";
+		toReturn += "\ttranslation 0.0 " + "30" + "0.0\n";
+		
+		/*
 		toReturn += "	geometry PointSet {\n";
 		toReturn += "		coord Coordinate {\n";
 		toReturn += " 			point [\n";	
+		
+		
 		for (int i = 0; i < cubes.size(); i ++) {
 			Cube currCube = cubes.get(i);
 			toReturn += "  			" + String.valueOf(currCube.x) + " " + 
@@ -108,6 +150,9 @@ public class Octree {
 			toReturn += "			1.0 1.0 1.0,\n";
 		}
 		toReturn += "] \n } \n} \n}";
+		*/
+		
+		
 		return toReturn;
 	}
 
@@ -250,5 +295,26 @@ public class Octree {
 			this.radius = radius;
 		}
 	}
-
+	
+	static class AllPartialInWrapper {
+		boolean allIn;
+		boolean partialIn;
+		
+		public AllPartialInWrapper(boolean allIn, boolean partialIn) {
+			this.allIn = allIn;
+			this.partialIn = partialIn;
+		}
+	}
+	
+	static class AllPartialInCubesWrapper {
+		ArrayList<Cube> allOut = new ArrayList<>();
+		ArrayList<Cube> partialIn = new ArrayList<>();
+		int level;
+		
+		public AllPartialInCubesWrapper(ArrayList<Cube> allOut, ArrayList<Cube> partialIn, int level) {
+			this.allOut = allOut;
+			this.partialIn = partialIn;
+			this.level = level;
+		}
+	}
 }
