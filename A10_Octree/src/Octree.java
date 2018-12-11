@@ -16,7 +16,7 @@ public class Octree {
 	static final double DEPTH = 12;
 	static final double[] boxCenter = { 0, 0, 0 };
 	static final double[] boxDimension = { WIDTH, HEIGHT, DEPTH };
-	static final int STOP_LEVEL = 7;
+	static final int STOP_LEVEL = 5;
 	static final int THREAD_COUNT = 5;
 	// Some properties of the sphere
 	static final double RADIUS = 8;
@@ -48,23 +48,27 @@ public class Octree {
 	}
 
 	/**
-	 * 
-	 * @param sphere
-	 * @param cube
-	 * @param level
-	 * @return
+	 * This methods will traverse tree using a recursion method, usually user will start to call
+	 * this method at level = 0
+	 * @param sphere	a sphere object
+	 * @param cube		a cube object
+	 * @param level		an int indicates level number, usually starts at 0
+	 * @return	an ArrayList of ColoredCubes for the VRML files
 	 */
 	public static ArrayList<ColoredCube> traverseTree(Sphere sphere, Cube cube, int level) {
 		ArrayList<ColoredCube> cCubes = new ArrayList<>();
 		int cubeSphere = locationStatus(cube, sphere);
+		
+		// Recursion stop condition, when executing the STOP_LEVEL, colors are assigned accroding 
+		// to level information
 		if (level == STOP_LEVEL) {
 			if (cubeSphere == 1) {
 				cCubes.add(new ColoredCube(-1, cube)); // -1 indicates that it is the last level half intersection cube
-			} else if (cubeSphere == 2) {
+			} else if (cubeSphere == 2) {				// 2 indicates that the cube is totally outside the sphere
 				cCubes.add(new ColoredCube(level, cube));
 			}
-
 			return cCubes;
+			
 		} else if (cubeSphere == 2) {
 			cCubes.add(new ColoredCube(level, cube));
 			return cCubes;
@@ -80,6 +84,11 @@ public class Octree {
 		return cCubes;
 	}
 
+	/**
+	 * This class is a representation for a cube with an integer for color
+	 * @author Grant Zheng
+	 *
+	 */
 	static class ColoredCube {
 		int color;
 		Cube cube;
@@ -89,9 +98,19 @@ public class Octree {
 			this.cube = cube;
 		}
 	}
-
+	
+	/**
+	 * This method return the location relationship between the sphere and the box
+	 * @param cube	a cube object
+	 * @param sphere	a sphere object
+	 * @return	an integer, 0 indicates that the cube is completely in, 1 indicates that
+	 * the box is partially in the sphere, 2 indicates that the box is competely outside
+	 */
+	
+	
 	public static int locationStatus(Cube cube, Sphere sphere) {
 		ArrayList<double[]> cornerList = cube.calculateCorners();
+		// Check for center relationships
 		double[] cubeCenter = { cube.x, cube.y, cube.z };
 		double[] sphereCenter = sphere.center;
 		double widthL = cubeCenter[0] - cube.width / 2;
@@ -107,6 +126,7 @@ public class Octree {
 			sphereInBox = true;
 		}
 
+		// Check for corner relationships
 		int cornersIn = 0;
 		for (int i = 0; i < 8; i++) {
 			double[] currCorner = cornerList.get(i);
@@ -128,6 +148,12 @@ public class Octree {
 		}
 	}
 
+	/**
+	 * Generates WRL file for rendering
+	 * @param cubes	Cubes that are outside of the sphere
+	 * @param sphere	The sphere
+	 * @return a String containing for the VRML file
+	 */
 	public static String generateVRML(ArrayList<ColoredCube> cubes, Sphere sphere) {
 		double x0 = sphere.center[0];
 		double y0 = sphere.center[1];
@@ -331,7 +357,7 @@ public class Octree {
 	}
 
 	/**
-	 * 
+	 * A Sphere object
 	 * @author Grant Zheng
 	 *
 	 */
