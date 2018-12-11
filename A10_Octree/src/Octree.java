@@ -16,10 +16,16 @@ public class Octree {
 	static final double DEPTH = 12;
 	static final double[] boxCenter = { 0, 0, 0 };
 	static final double[] boxDimension = { WIDTH, HEIGHT, DEPTH };
-	static final int STOP_LEVEL = 5;
+	static final int STOP_LEVEL = 7;
+	static final int THREAD_COUNT = 5;
 	// Some properties of the sphere
 	static final double RADIUS = 8;
 
+	/**
+	 * The main function that handles user input and output
+	 * @param args
+	 * @throws IOException
+	 */
 	public static void main(String[] args) throws IOException {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 		System.out.println("Input coordinates");
@@ -126,29 +132,30 @@ public class Octree {
 		double x0 = sphere.center[0];
 		double y0 = sphere.center[1];
 		double z0 = sphere.center[2];
-		String toReturn = "#VRML V2.0 utf8 \n";
-		toReturn += "Background { skyColor 1 1 1 }\n";
-		toReturn += "NavigationInfo { type \"EXAMINE\"}\n";
+		StringBuilder returnBuilder = new StringBuilder();
+		returnBuilder.append("#VRML V2.0 utf8 \n");
+		returnBuilder.append("Background { skyColor 1 1 1 }\n");
+		returnBuilder.append("NavigationInfo { type \"EXAMINE\"}\n");
 
 		// This is the box
-		toReturn += "Shape {\n";
-		toReturn += "\tappearance Appearance { material Material { diffuseColor 0 0 1 }}\n";
-		toReturn += "\tgeometry Box { size " + WIDTH + " " + HEIGHT + " " + DEPTH + "}\n";
-		toReturn += "}\n";
+		returnBuilder.append("Shape {\n");
+		returnBuilder.append("\tappearance Appearance { material Material { diffuseColor 0 0 1 }}\n");
+		returnBuilder.append("\tgeometry Box { size " + WIDTH + " " + HEIGHT + " " + DEPTH + "}\n");
+		returnBuilder.append("}\n");
 
 		// This is the sphere
-		toReturn += "Transform {\n";
-		toReturn += "\ttranslation " + x0 + " " + y0 + " " + z0 + "\n";
-		toReturn += "\tchildren Shape {\n";
-		toReturn += "\t\tgeometry Sphere { radius " + RADIUS + "}\n";
-		toReturn += "\t\tappearance Appearance { material Material { diffuseColor 1 0 0 }}\n";
-		toReturn += "\t}\n";
-		toReturn += "}\n";
+		returnBuilder.append("Transform {\n");
+		returnBuilder.append("\ttranslation " + x0 + " " + y0 + " " + z0 + "\n");
+		returnBuilder.append("\tchildren Shape {\n");
+		returnBuilder.append("\t\tgeometry Sphere { radius " + RADIUS + "}\n");
+		returnBuilder.append("\t\tappearance Appearance { material Material { diffuseColor 1 0 0 }}\n");
+		returnBuilder.append("\t}\n");
+		returnBuilder.append("}\n");
 
 		// Translate 30 to draw the octree boxes
-		toReturn += "Transform {\n";
-		toReturn += "\ttranslation 0.0 30.0 0.0\n";
-		toReturn += "\tchildren [\n";
+		returnBuilder.append("Transform {\n");
+		returnBuilder.append("\ttranslation 0.0 30.0 0.0\n");
+		returnBuilder.append("\tchildren [\n");
 		
 		ArrayList<double[]> colorList = new ArrayList<>();
 		Random rand = new Random();
@@ -182,19 +189,19 @@ public class Octree {
 			String color = "diffuseColor ";
 			
 			color += thisColor[0] + " " + thisColor[1] + " " + thisColor[2];
-			toReturn += "\tTransform {\n";
-			toReturn += "\t\ttranslation " + currCube.x + " " + currCube.y + " " + currCube.z + "\n";
-			toReturn += "\t\tchildren Shape {\n";
-			toReturn += "\t\t\tappearance Appearance { material Material {" + color + " }}\n";
-			toReturn += "\t\t\tgeometry Box {size " + 0.9 * curWidth + " " + 0.9 * curHeight + " " + 0.9 * curDepth
-					+ "}\n";
-			toReturn += "\t\t}\n";
-			toReturn += "\t},\n";
+			returnBuilder.append("\tTransform {\n");
+			returnBuilder.append("\t\ttranslation " + currCube.x + " " + currCube.y + " " + currCube.z + "\n");
+			returnBuilder.append("\t\tchildren Shape {\n");
+			returnBuilder.append("\t\t\tappearance Appearance { material Material {" + color + " }}\n");
+			returnBuilder.append("\t\t\tgeometry Box {size " + 0.9 * curWidth + " " + 0.9 * curHeight + " " + 0.9 * curDepth
+					+ "}\n");
+			returnBuilder.append("\t\t}\n");
+			returnBuilder.append("\t},\n");
 		}
 
-		toReturn += "\t]\n";
-		toReturn += "}\n";
-		return toReturn;
+		returnBuilder.append("\t]\n");
+		returnBuilder.append("}\n");
+		return returnBuilder.toString();
 	}
 
 	/**
