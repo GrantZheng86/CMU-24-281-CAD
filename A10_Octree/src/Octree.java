@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.StringTokenizer;
 
 public class Octree {
@@ -15,7 +16,7 @@ public class Octree {
 	static final double DEPTH = 12;
 	static final double[] boxCenter = { 0, 0, 0 };
 	static final double[] boxDimension = { WIDTH, HEIGHT, DEPTH };
-
+	static final int STOP_LEVEL = 5;
 	// Some properties of the sphere
 	static final double RADIUS = 8;
 
@@ -50,7 +51,7 @@ public class Octree {
 	public static ArrayList<ColoredCube> traverseTree(Sphere sphere, Cube cube, int level) {
 		ArrayList<ColoredCube> cCubes = new ArrayList<>();
 		int cubeSphere = locationStatus(cube, sphere);
-		if (level == 5) {
+		if (level == STOP_LEVEL) {
 			if (cubeSphere == 1) {
 				cCubes.add(new ColoredCube(-1, cube)); // -1 indicates that it is the last level half intersection cube
 			} else if (cubeSphere == 2) {
@@ -93,10 +94,10 @@ public class Octree {
 		double heightU = cubeCenter[1] + cube.height / 2;
 		double depthL = cubeCenter[2] - cube.depth / 2;
 		double depthU = cubeCenter[2] + cube.depth / 2;
-		
+
 		boolean sphereInBox = false;
-		if (sphereCenter[0] > widthL && sphereCenter[0] < widthU && sphereCenter[1] > heightL && sphereCenter[1] < heightU
-				&& sphereCenter[2] > depthL && sphereCenter[2] < depthU) {
+		if (sphereCenter[0] > widthL && sphereCenter[0] < widthU && sphereCenter[1] > heightL
+				&& sphereCenter[1] < heightU && sphereCenter[2] > depthL && sphereCenter[2] < depthU) {
 			sphereInBox = true;
 		}
 
@@ -109,15 +110,15 @@ public class Octree {
 
 		if (sphereInBox) {
 			if (cornersIn == 8)
-				return 0;			// Fully in
-			return 1;				// Partially In
-			
+				return 0; // Fully in
+			return 1; // Partially In
+
 		} else {
 			if (cornersIn == 8)
-				return 0;			// Fully in
+				return 0; // Fully in
 			else if (cornersIn == 0)
-				return 2;			// Fully out
-			return 1;				// Partially In
+				return 2; // Fully out
+			return 1; // Partially In
 		}
 	}
 
@@ -126,46 +127,73 @@ public class Octree {
 		double y0 = sphere.center[1];
 		double z0 = sphere.center[2];
 		String toReturn = "#VRML V2.0 utf8 \n";
-		// toReturn += "Background { skyColor 1 1 1 }\n";
-		// toReturn += "NavigationInfo { type \"EXAMINE\"}\n";
+		toReturn += "Background { skyColor 1 1 1 }\n";
+		toReturn += "NavigationInfo { type \"EXAMINE\"}\n";
 
-		/*
-		 * // Shape for the original box toReturn += "Shape{\n"; toReturn +=
-		 * "\tappearance Appearance { material Material { diffuseColor 0 0 1 }}\n";
-		 * toReturn += "\tgeometry Box { size " + WIDTH + " " + HEIGHT + " " + DEPTH +
-		 * "}\n"; toReturn += "}\n";
-		 * 
-		 * //Shape for the original sphere toReturn += "Transform {\n"; toReturn +=
-		 * "\ttranslation " + x0 + " " + y0 + " " + z0 + "\n"; toReturn +=
-		 * "\tchildren Shape {\n"; toReturn += "\t\tgeometry Sphere { radius " + RADIUS
-		 * + "}\n"; toReturn +=
-		 * "\t\tappearance Appearance { material Material { diffuseColor 1 0 0 }}\n";
-		 * toReturn += "\t}\n"; toReturn += "}\n";
-		 * 
-		 * // Subboxes toReturn += "Transform {\n"; toReturn += "\ttranslation 0.0 " +
-		 * "30" + "0.0\n";
-		 */
-
+		// This is the box
 		toReturn += "Shape {\n";
-		toReturn += "	geometry PointSet {\n";
-		toReturn += "		coord Coordinate {\n";
-		toReturn += " 			point [\n";
+		toReturn += "\tappearance Appearance { material Material { diffuseColor 0 0 1 }}\n";
+		toReturn += "\tgeometry Box { size " + WIDTH + " " + HEIGHT + " " + DEPTH + "}\n";
+		toReturn += "}\n";
 
-		for (int i = 0; i < cubes.size(); i++) {
-			ColoredCube currCube = cubes.get(i);
-			toReturn += "  			" + String.valueOf(currCube.cube.x) + " " + String.valueOf(currCube.cube.y) + " "
-					+ String.valueOf(currCube.cube.z) + ",\n";
+		// This is the sphere
+		toReturn += "Transform {\n";
+		toReturn += "\ttranslation " + x0 + " " + y0 + " " + z0 + "\n";
+		toReturn += "\tchildren Shape {\n";
+		toReturn += "\t\tgeometry Sphere { radius " + RADIUS + "}\n";
+		toReturn += "\t\tappearance Appearance { material Material { diffuseColor 1 0 0 }}\n";
+		toReturn += "\t}\n";
+		toReturn += "}\n";
+
+		// Translate 30 to draw the octree boxes
+		toReturn += "Transform {\n";
+		toReturn += "\ttranslation 0.0 30.0 0.0\n";
+		toReturn += "\tchildren [\n";
+		
+		ArrayList<double[]> colorList = new ArrayList<>();
+		Random rand = new Random();
+		for (int i = 0; i < STOP_LEVEL + 1; i ++) {
+			double r = rand.nextDouble();
+			double g = rand.nextDouble();
+			double b = rand.nextDouble();
+			double[] toAdd = {r, g, b};
+			colorList.add(toAdd);
 		}
 
-		toReturn += " 			]\n";
-		toReturn += "  		}\n";
-		toReturn += "  		color Color {\n";
-		toReturn += "  		color [\n";
+		// Draw the cubes
 		for (int i = 0; i < cubes.size(); i++) {
-			toReturn += "			1.0 1.0 1.0,\n";
+			ColoredCube temp = cubes.get(i);
+			int levelColor = temp.color;
+			Cube currCube = temp.cube;
+			double[] thisColor;
+			double curWidth, curHeight, curDepth;
+			if (levelColor == -1.0) {
+				curWidth = WIDTH / Math.pow(2, STOP_LEVEL);
+				curHeight = HEIGHT / Math.pow(2, STOP_LEVEL);
+				curDepth = DEPTH / Math.pow(2, STOP_LEVEL);
+				thisColor = new double[] {0, 0, 0};
+			} else {
+				curWidth = WIDTH / Math.pow(2, levelColor);
+				curHeight = HEIGHT / Math.pow(2, levelColor);
+				curDepth = DEPTH / Math.pow(2, levelColor);
+				thisColor = colorList.get(levelColor);
+			}
+			// String curSize = "size" + curWidth + " " + curHeight + " " + curDepth;
+			String color = "diffuseColor ";
+			
+			color += thisColor[0] + " " + thisColor[1] + " " + thisColor[2];
+			toReturn += "\tTransform {\n";
+			toReturn += "\t\ttranslation " + currCube.x + " " + currCube.y + " " + currCube.z + "\n";
+			toReturn += "\t\tchildren Shape {\n";
+			toReturn += "\t\t\tappearance Appearance { material Material {" + color + " }}\n";
+			toReturn += "\t\t\tgeometry Box {size " + 0.9 * curWidth + " " + 0.9 * curHeight + " " + 0.9 * curDepth
+					+ "}\n";
+			toReturn += "\t\t}\n";
+			toReturn += "\t},\n";
 		}
-		toReturn += "] \n } \n} \n}";
 
+		toReturn += "\t]\n";
+		toReturn += "}\n";
 		return toReturn;
 	}
 
